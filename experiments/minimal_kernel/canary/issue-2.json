@@ -1,0 +1,7 @@
+{
+  "schema": "OWL_GITHUB_CANARY_V1",
+  "source_issue": "https://github.com/karinasandorik-bit/OWL-CORE/issues/2",
+  "event_id": "github:karinasandorik-bit/OWL-CORE:issue:2",
+  "action": "write_deterministic_marker",
+  "authorized_branch": "trial/minimal-kernel-001"
+}
