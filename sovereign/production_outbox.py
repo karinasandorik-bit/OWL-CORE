@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS owl_production_outbox (
- operation_id text PRIMARY KEY, grant_id text NOT NULL, request_sha256 text NOT NULL,
+ operation_id text PRIMARY KEY, grant_id text NOT NULL UNIQUE, request_sha256 text NOT NULL,
  target_repo text NOT NULL, target_branch text NOT NULL, target_path text NOT NULL, state text NOT NULL
  CHECK (state IN ('pending','verified','blocked')),
  attempts integer NOT NULL DEFAULT 0, remote_blob_sha text,
@@ -86,7 +86,7 @@ def execute_bounded(db, *, operation_id, grant_id, repo, branch, path, payload,
             """SELECT grant_id,request_sha256,target_repo,target_branch,target_path,state
                FROM owl_production_outbox WHERE operation_id=%s""", (operation_id,)
         ).fetchone()
-        if row[:5] != (grant_id, sha, repo, branch, path) or row[5] == "blocked":
+        if not row or row[:5] != (grant_id, sha, repo, branch, path) or row[5] == "blocked":
             raise RuntimeError("OUTBOX_CONFLICT")
         db.execute("UPDATE owl_production_outbox SET attempts=attempts+1 WHERE operation_id=%s",
                    (operation_id,))
