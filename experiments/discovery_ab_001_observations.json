@@ -1,0 +1,42 @@
+[
+  {
+    "title": "scan drops the last accumulated value",
+    "url": "https://github.com/Kotlin/multik/issues/356",
+    "labels": "bug"
+  },
+  {
+    "title": "mapNotNull pads the result with zeros instead of dropping nulls",
+    "url": "https://github.com/Kotlin/multik/issues/355",
+    "labels": "bug"
+  },
+  {
+    "title": "The admin dashboard layout is not mirrored in right-to-left languages",
+    "url": "https://github.com/medusajs/medusa/issues/17186",
+    "labels": "bug"
+  },
+  {
+    "title": "UI components render and behave incorrectly in right-to-left languages",
+    "url": "https://github.com/medusajs/medusa/issues/17185",
+    "labels": "bug"
+  },
+  {
+    "title": "Aider architect pair is credited to its editor model",
+    "url": "https://github.com/umutcanapaydin/Model_Ranking/issues/233",
+    "labels": "bug"
+  },
+  {
+    "title": "runtime diagnostic node version displayed incorrectly",
+    "url": "https://github.com/u7chan/monorepo/issues/1829",
+    "labels": "bug"
+  },
+  {
+    "title": "Baseplates screw head leaves hundreds of bad edges",
+    "url": "https://github.com/Oliver-Johnson/DrawerForge/issues/73",
+    "labels": "bug"
+  },
+  {
+    "title": "extend JSON output and query to remaining CLI commands",
+    "url": "https://github.com/ayeshurun/fabric-cli/issues/106",
+    "labels": "feature"
+  }
+]
