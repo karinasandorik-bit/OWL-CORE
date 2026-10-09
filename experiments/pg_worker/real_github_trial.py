@@ -3,6 +3,9 @@ import base64,hashlib,json,os,signal,subprocess,sys,time
 from urllib.request import Request,urlopen
 from urllib.error import HTTPError
 import psycopg
+from pathlib import Path
+sys.path.insert(0,str(Path(__file__).resolve().parents[2] / 'sovereign'))
+from controller import Observation, decide, verify
 REPO=os.environ['OWL_REPO']; BRANCH=os.environ['OWL_BRANCH']; RUN=os.environ['OWL_RUN_ID']
 PATH=f'experiments/pg_worker/live_canary/{RUN}.json'
 OP=f'owl:live:{RUN}'
@@ -46,7 +49,11 @@ def work(kill=False):
             print('WORKER_VERIFIED',blob,flush=True)
         finally:db.execute('SELECT pg_advisory_unlock(hashtextextended(%s,0))',(OP,))
 def orchestrate():
-    if remote() is not None:raise RuntimeError('RUN_CANARY_ALREADY_EXISTS')
+    initial=remote()
+    observation=Observation(OP,'github-contents-api',DIGEST,404 if initial is None else 200)
+    decision=decide(observation)
+    print('OWL_OBSERVATION',observation.status,'OWL_DECISION',decision.action,flush=True)
+    if decision.action!='CREATE_CANARY':raise RuntimeError('CONTROLLER_REJECTED_NEW_CANARY')
     first=subprocess.run([sys.executable,__file__,'worker','kill'],capture_output=True,text=True)
     print('first:',first.returncode,first.stdout,first.stderr,flush=True)
     if first.returncode!=-signal.SIGKILL or 'GITHUB_WRITE_ACKNOWLEDGED_THEN_SIGKILL' not in first.stdout:raise RuntimeError('NO_PROVEN_SIGKILL')
@@ -64,6 +71,8 @@ def orchestrate():
     if blob!=row[2]:raise RuntimeError('REMOTE_NOT_VERIFIED')
     code,obj=api('GET',f'/repos/{REPO}/commits?path={PATH}&sha={BRANCH}&per_page=100')
     if code!=200 or len(obj)!=1:raise RuntimeError(f'NOT_EXACTLY_ONE_REMOTE_COMMIT {code} {len(obj) if isinstance(obj,list) else obj}')
+    proof=verify(observation,decision,{'operation_id':OP,'remote_digest':DIGEST,'remote_commit_count':len(obj),'outbox_state':row[0],'recovery_workers':len(children),'kill_exit':first.returncode,'remote_sha':blob})
+    print('OWL_CONTROLLER_VERIFIED',json.dumps(proof,sort_keys=True),flush=True)
     print('LIVE_PROOF_PASS: SIGKILL=-9, durable pending, 2 workers, 1 remote path commit, verified SHA',blob,flush=True)
 if __name__=='__main__':
     if len(sys.argv)>1 and sys.argv[1]=='worker':work(len(sys.argv)>2 and sys.argv[2]=='kill')
