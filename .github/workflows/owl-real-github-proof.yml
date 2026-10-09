@@ -5,6 +5,9 @@ on:
     branches: [trial/minimal-kernel-001]
     paths:
       - '.github/workflows/owl-real-github-proof.yml'
+      - 'sovereign/controller.py'
+      - 'sovereign/test_controller.py'
+      - 'experiments/pg_worker/real_github_trial.py'
 permissions:
   contents: write
 jobs:
@@ -28,5 +31,7 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: pip install -r experiments/pg_worker/requirements.txt
+      - name: Fail-closed controller unit tests
+        run: python -m unittest discover -s sovereign -p 'test_*.py' -v
       - name: New canary, SIGKILL, restart and concurrent recovery
         run: python experiments/pg_worker/real_github_trial.py
