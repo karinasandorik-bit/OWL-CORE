@@ -4,7 +4,14 @@ on:
     paths:
       - 'sovereign/production_outbox.py'
       - 'sovereign/test_production_outbox.py'
+      - 'sovereign/real_production_pg_trial.py'
       - 'runtime.py'
+      - '.github/workflows/owl-production-outbox.yml'
+  push:
+    branches: ['feature/production-recovery-gated-001']
+    paths:
+      - 'sovereign/production_outbox.py'
+      - 'sovereign/real_production_pg_trial.py'
       - '.github/workflows/owl-production-outbox.yml'
   workflow_dispatch:
 permissions:
@@ -20,4 +27,36 @@ jobs:
       - name: Fail-closed outbox tests
         run: python -m unittest sovereign.test_production_outbox -v
       - name: Syntax validation
-        run: python -m py_compile sovereign/production_outbox.py runtime.py
+        run: python -m py_compile sovereign/production_outbox.py sovereign/real_production_pg_trial.py runtime.py
+  real-pg-crash-recovery:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/feature/production-recovery-gated-001'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: write
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install isolated PostgreSQL driver
+        run: python -m pip install 'psycopg[binary]>=3.2,<4'
+      - name: Verify real PG, external write, SIGKILL and two concurrent recoveries
+        run: python -m sovereign.real_production_pg_trial
