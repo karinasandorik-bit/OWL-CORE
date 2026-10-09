@@ -37,6 +37,17 @@ try:
 finally:
     db.close()
 
+
+# Revenue actuator is opt-in; production remains unchanged without explicit credentials.
+if os.environ.get("OWL_REVENUE_ENABLED") == "1":
+    from revenue_actuator import execute_once
+    try:
+        print(json.dumps({"event":"owl_revenue_attempt",**execute_once()}),flush=True)
+    except Exception as exc:
+        print(json.dumps({"event":"owl_revenue_denied_or_failed","error":type(exc).__name__}),flush=True)
+        # Fail closed: no retries or unapproved fallback on authorization/network failure.
+        sys.exit(3)
+
 while running:
     db = connect()
     try:
