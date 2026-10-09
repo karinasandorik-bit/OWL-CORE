@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OWL Evidence Contract V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "kind",
+    "id",
+    "created_at",
+    "epistemic_status",
+    "source",
+    "payload",
+    "lineage"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "OWL_EVIDENCE_V1"
+    },
+    "kind": {
+      "enum": [
+        "Evidence",
+        "Decision",
+        "Action",
+        "Outcome",
+        "CapabilityGrant",
+        "Lineage"
+      ]
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "epistemic_status": {
+      "enum": [
+        "EXECUTED",
+        "DERIVED",
+        "HYPOTHESIS",
+        "UNKNOWN"
+      ]
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1
+    },
+    "payload": {
+      "type": "object"
+    },
+    "lineage": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
