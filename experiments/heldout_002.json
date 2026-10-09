@@ -1,0 +1,42 @@
+[
+  {
+    "title": "Add missing --help descriptions for use and whoami",
+    "url": "https://github.com/arinyaho/mien/issues/88",
+    "labels": "good-first-issue"
+  },
+  {
+    "title": "New 5LNCs: four navigation waypoint additions",
+    "url": "https://github.com/VATSIM-UK/UK-Sector-File/issues/6289",
+    "labels": "good-first-issue"
+  },
+  {
+    "title": "Navaid Changes: remove NDB and add DME",
+    "url": "https://github.com/VATSIM-UK/UK-Sector-File/issues/6288",
+    "labels": "good-first-issue"
+  },
+  {
+    "title": "Add new Theme: Bento Sage",
+    "url": "https://github.com/lingdojo/kana-dojo/issues/31992",
+    "labels": "good-first-issue"
+  },
+  {
+    "title": "Add new Learner Mistake 389",
+    "url": "https://github.com/lingdojo/kana-dojo/issues/31991",
+    "labels": "good-first-issue"
+  },
+  {
+    "title": "Add new Example Sentence 433",
+    "url": "https://github.com/lingdojo/kana-dojo/issues/31983",
+    "labels": "good-first-issue"
+  },
+  {
+    "title": "Add new Etiquette Tip 242",
+    "url": "https://github.com/lingdojo/kana-dojo/issues/31982",
+    "labels": "good-first-issue"
+  },
+  {
+    "title": "Add new False Friend Pair 657",
+    "url": "https://github.com/lingdojo/kana-dojo/issues/31981",
+    "labels": "good-first-issue"
+  }
+]
