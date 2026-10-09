@@ -122,11 +122,11 @@ def worker():
         return result
 
 def main():
-    ensure_branch()
-    prepare()
     if os.environ.get("OWL_CHILD_WORKER") == "1":
         worker()
         return
+    ensure_branch()
+    prepare()
     child_env = {**os.environ, "OWL_CHILD_WORKER": "1",
                  "OWL_KILL_AFTER_WRITE": "1", "OWL_ENABLE_GITHUB_ACTUATOR": "1"}
     first = subprocess.run([sys.executable, "-m",
