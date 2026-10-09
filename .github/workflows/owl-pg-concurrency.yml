@@ -1,0 +1,49 @@
+name: OWL PostgreSQL concurrency proof
+on:
+  workflow_dispatch:
+  push:
+    branches: [trial/minimal-kernel-001]
+    paths:
+      - 'experiments/pg_worker/**'
+      - '.github/workflows/owl-pg-concurrency.yml'
+permissions:
+  contents: read
+jobs:
+  concurrent-reconciliation:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: owl
+          POSTGRES_PASSWORD: owl_test_only
+          POSTGRES_DB: owl
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U owl" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://owl:owl_test_only@localhost:5432/owl
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: pip install -r experiments/pg_worker/requirements.txt
+      - name: Two concurrent real GitHub read/reconcile workers
+        shell: bash
+        run: |
+          set -euo pipefail
+          python experiments/pg_worker/worker.py > /tmp/worker1.log 2>&1 &
+          p1=$!
+          python experiments/pg_worker/worker.py > /tmp/worker2.log 2>&1 &
+          p2=$!
+          wait "$p1"
+          wait "$p2"
+          cat /tmp/worker1.log /tmp/worker2.log
+          python - <<'PY'
+          import os,psycopg
+          with psycopg.connect(os.environ['DATABASE_URL']) as db:
+              row=db.execute("select status,attempts,observed_blob_sha from owl_canary_outbox where op_id='owl:github:issue:2:canary:v1'").fetchone()
+              assert row is not None and row[0]=='verified' and row[1]==2 and row[2]
+              print('TWO_WORKERS_RECONCILED',row)
+          PY
