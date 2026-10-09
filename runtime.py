@@ -6,6 +6,7 @@ import subprocess
 import sys
 import time
 from worker import connect, enqueue, run_once
+from runtime_attestation import attest
 
 running = True
 def stop(*_):
@@ -17,6 +18,7 @@ signal.signal(signal.SIGINT, stop)
 interval = max(1, int(os.environ.get("OWL_POLL_SECONDS", "10")))
 canary_id = os.environ.get("OWL_CANARY_ID", "")
 trial_id = os.environ.get("OWL_RECOVERY_TRIAL_ID", "")
+print(json.dumps({"event":"runtime_attestation",**attest()},sort_keys=True),flush=True)
 db = connect()
 try:
     if canary_id:
