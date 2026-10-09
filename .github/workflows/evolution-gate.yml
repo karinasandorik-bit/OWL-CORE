@@ -14,5 +14,5 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Deterministic evolution gate tests
-        run: python -m unittest -v test_evolution_gate.py
+      - name: Deterministic screening and independent judge tests
+        run: python -m unittest -v test_evolution_gate.py test_independent_judge.py
