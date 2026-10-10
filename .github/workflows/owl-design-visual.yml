@@ -1,0 +1,31 @@
+name: OWL Design Visual QA
+on:
+  pull_request:
+    paths:
+      - 'design-system/**'
+      - '.github/workflows/owl-design-visual.yml'
+  workflow_dispatch:
+jobs:
+  chromium:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright runner
+        run: npm install --no-save --package-lock=false @playwright/test
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run visual checks
+        run: npx playwright test --config=design-system/playwright.config.mjs
+      - name: Upload screenshots and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: owl-nocturne-visual-qa
+          path: |
+            test-results/
+            design-system/playwright-report/
+          retention-days: 14
