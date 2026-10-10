@@ -5,6 +5,11 @@ on:
     paths:
       - 'fault_lab/**'
       - '.github/workflows/owl-004-fault.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'fault_lab/**'
+      - '.github/workflows/owl-004-fault.yml'
   workflow_dispatch:
 jobs:
   end_to_end_fault:
