@@ -7,6 +7,29 @@ import sys
 import time
 from worker import connect, enqueue, run_once
 
+def production_outbox_preflight():
+    """Optional READ-ONLY PostgreSQL authority inspection; no actuation or grants."""
+    dsn = os.environ.get("OWL_PG_OUTBOX_DSN")
+    if not dsn:
+        print(json.dumps({"event":"production_pg_outbox","status":"DISABLED"}),flush=True)
+        return
+    try:
+        import psycopg
+        with psycopg.connect(dsn, connect_timeout=5) as pg:
+            pg.execute("SET TRANSACTION READ ONLY")
+            outbox = pg.execute("SELECT state,count(*) FROM owl_production_outbox GROUP BY state").fetchall()
+            grants = pg.execute(
+                "SELECT count(*) FROM public.owl_capability_grants WHERE enabled=true AND revoked_at IS NULL"
+            ).fetchone()[0]
+            print(json.dumps({"event":"production_pg_outbox","status":"OBSERVED",
+                              "states":dict(outbox),"active_grants":grants}),flush=True)
+    except Exception as exc:
+        print(json.dumps({"event":"production_pg_outbox","status":"BLOCKED",
+                          "error_type":type(exc).__name__}),flush=True)
+        raise SystemExit(3)
+
+production_outbox_preflight()
+
 running = True
 def stop(*_):
     global running
