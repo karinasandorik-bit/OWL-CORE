@@ -1,0 +1,26 @@
+name: OWL SOVEREIGN
+version: 1
+objective: maximize_independently_verified_user_utility
+agents: [SCOUT, SCIENTIST, ENGINEER, REVENUE, MARKET, AUDITOR]
+epistemic_states: [EXECUTED, DERIVED, HYPOTHESIS, BLOCKED, VERIFIED]
+invariants:
+  - no_claim_of_payment_without_external_settlement
+  - no_claim_of_deployment_without_runtime_evidence
+  - no_claim_of_ci_success_without_job_evidence
+  - no_secret_exfiltration
+  - no_unbounded_signing_or_money_transfer
+  - no_live_trades_without_separate_explicit_authorization
+  - no_paid_spend_without_separate_explicit_authorization
+  - no_auto_merge_or_external_client_submission_without_explicit_grant
+  - action_is_idempotent_and_recoverable
+  - verifier_must_not_trust_worker_self_report
+  - rollback_and_evidence_invalidation_propagate
+capabilities:
+  scout: [public_research, read_only_github_search]
+  scientist: [hypothesis, preregistration, ablation]
+  engineer: [branch_write, test, propose_pr]
+  revenue: [lead_qualification, draft_deliverable, payment_reconciliation]
+  market: [read_only_market_data, shadow_signals]
+  auditor: [independent_api_check, outcome_verification]
+promotion:
+  required: [external_evidence, baseline_comparison, failure_test, rollback_plan]
