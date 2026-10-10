@@ -1,0 +1,56 @@
+name: OWL 004 PostgreSQL SIGKILL Proof
+on:
+  push:
+    branches: [owl-004-postgres-fault-injection]
+    paths:
+      - 'fault_lab/**'
+      - '.github/workflows/owl-004-fault.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'fault_lab/**'
+      - '.github/workflows/owl-004-fault.yml'
+  workflow_dispatch:
+jobs:
+  end_to_end_fault:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: owl
+          POSTGRES_PASSWORD: owl_test_only
+          POSTGRES_DB: owl_fault
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U owl -d owl_fault"
+          --health-interval 2s
+          --health-timeout 2s
+          --health-retries 20
+    env:
+      OWL_PG_DSN: postgresql://owl:owl_test_only@127.0.0.1:5432/owl_fault
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install 'psycopg[binary]>=3.2,<4' 'fastapi>=0.110,<1' 'uvicorn>=0.29,<1' 'requests>=2.31,<3'
+      - name: Run real SIGKILL between provider commit and PostgreSQL receipt
+        run: python fault_lab/ci_fault_test.py
+      - name: Find isolated CI PostgreSQL container
+        run: |
+          docker ps --format '{{.ID}} {{.Image}}' | grep 'postgres:16' | head -1 | awk '{print "OWL_TEST_POSTGRES_CONTAINER="$1}' >> "$GITHUB_ENV"
+      - name: Run combined outages and eight worker contenders
+        run: python fault_lab/ci_adversarial_test.py
+      - name: Upload both ledgers and worker exits
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: owl004-proof-evidence
+          path: |
+            owl004_evidence/
+            owl005_evidence/
+          if-no-files-found: warn
