@@ -40,10 +40,17 @@ jobs:
         run: pip install 'psycopg[binary]>=3.2,<4' 'fastapi>=0.110,<1' 'uvicorn>=0.29,<1' 'requests>=2.31,<3'
       - name: Run real SIGKILL between provider commit and PostgreSQL receipt
         run: python fault_lab/ci_fault_test.py
+      - name: Find isolated CI PostgreSQL container
+        run: |
+          docker ps --format '{{.ID}} {{.Image}}' | grep 'postgres:16' | head -1 | awk '{print "OWL_TEST_POSTGRES_CONTAINER="$1}' >> "$GITHUB_ENV"
+      - name: Run combined outages and eight worker contenders
+        run: python fault_lab/ci_adversarial_test.py
       - name: Upload both ledgers and worker exits
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: owl004-proof-evidence
-          path: owl004_evidence/
+          path: |
+            owl004_evidence/
+            owl005_evidence/
           if-no-files-found: warn
