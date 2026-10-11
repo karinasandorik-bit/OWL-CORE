@@ -1,0 +1,43 @@
+name: PostgreSQL worker fault injection
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/isolated-worker-001]
+    paths:
+      - 'experiments/pg_worker_004/**'
+      - '.github/workflows/pg-fault-injection.yml'
+permissions:
+  contents: read
+jobs:
+  postgres-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: test-only-ci-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    defaults:
+      run:
+        working-directory: experiments/pg_worker_004
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'psycopg[binary]==3.2.9'
+      - name: Setup isolated roles and schema
+        env:
+          PGPASSWORD: test-only-ci-password
+        run: |
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f sql/schema.sql
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -c "ALTER ROLE owl_test_worker PASSWORD 'ci-worker-only'; ALTER ROLE owl_test_verifier PASSWORD 'ci-verifier-only';"
+      - name: Run independent processes and crash tests
+        env:
+          OWL_WORKER_DSN: postgresql://owl_test_worker:ci-worker-only@localhost:5432/postgres
+          OWL_VERIFIER_DSN: postgresql://owl_test_verifier:ci-verifier-only@localhost:5432/postgres
+        run: python tests/integration.py
