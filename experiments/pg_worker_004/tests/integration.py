@@ -39,3 +39,21 @@ with psycopg.connect(os.environ['OWL_VERIFIER_DSN']) as c:
  except psycopg.errors.InsufficientPrivilege:c.rollback()
  else:raise AssertionError('verifier can claim')
 print('PASS privilege isolation')
+
+
+# A stale lease owner must not commit after a different worker reclaims the job.
+k=case('stale')
+run('--submit',k)
+with psycopg.connect(os.environ['OWL_WORKER_DSN'],autocommit=True) as c:
+    first=c.execute('select job_key,payload,fence from owl_test.claim(%s,%s)',('stale-owner',1)).fetchone()
+assert first is not None and first[0]==k
+time.sleep(1.3)
+with psycopg.connect(os.environ['OWL_WORKER_DSN'],autocommit=True) as c:
+    second=c.execute('select job_key,payload,fence from owl_test.claim(%s,%s)',('new-owner',10)).fetchone()
+    assert second is not None and second[0]==k and second[2]==first[2]+1
+    stale_ok=c.execute('select owl_test.complete(%s,%s,%s,%s::jsonb)',(k,'stale-owner',first[2],json.dumps({'output':'stale'}))).fetchone()[0]
+    assert stale_ok is False
+    good={'input':second[1],'output':'ACK:'+k,'worker':'new-owner'}
+    assert c.execute('select owl_test.complete(%s,%s,%s,%s::jsonb)',(k,'new-owner',second[2],json.dumps(good))).fetchone()[0] is True
+assert verify(k)['fence']==2
+print('PASS stale owner rejected after lease takeover')
