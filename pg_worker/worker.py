@@ -9,7 +9,7 @@ from psycopg.rows import dict_row
 ALLOWED = {"healthcheck", "evaluate_candidate"}
 
 def connect():
-    return psycopg.connect(os.environ["OWL_TEST_DATABASE_URL"], row_factory=dict_row)
+    return psycopg.connect(os.environ["OWL_TEST_DATABASE_URL"], row_factory=dict_row, autocommit=True)
 
 def enqueue(conn, job_id, kind, payload):
     if kind not in ALLOWED:
