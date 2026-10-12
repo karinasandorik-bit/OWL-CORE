@@ -33,4 +33,4 @@ jobs:
       - name: Create isolated schema
         run: python -c "import os,psycopg; c=psycopg.connect(os.environ['OWL_TEST_DATABASE_URL']); c.execute(open('pg_worker/schema.sql').read()); c.commit(); c.close()"
       - name: Independent integration and subprocess crash tests
-        run: python -m pytest -v pg_worker/test_integration.py pg_worker/test_faults.py pg_worker/test_http_crash.py pg_worker/test_provider_contract.py pg_worker/test_stripe_contract.py pg_worker/test_http_lost_response.py
+        run: python -m pytest -v pg_worker/test_integration.py pg_worker/test_faults.py pg_worker/test_http_crash.py pg_worker/test_provider_contract.py pg_worker/test_stripe_contract.py pg_worker/test_http_lost_response.py pg_worker/test_remote_proof_verifier.py
