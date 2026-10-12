@@ -1,0 +1,36 @@
+name: OWL PostgreSQL independent fault injection
+on:
+  pull_request:
+    paths:
+      - 'pg_worker/**'
+      - '.github/workflows/pg-worker-fault.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-fault-injection:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: owl_test
+          POSTGRES_PASSWORD: local_ci_only
+          POSTGRES_DB: owl_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U owl_test -d owl_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      OWL_TEST_DATABASE_URL: postgresql://owl_test:local_ci_only@localhost:5432/owl_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'psycopg[binary]==3.2.10' 'pytest==8.4.2'
+      - name: Create isolated schema
+        run: python -c "import os,psycopg; c=psycopg.connect(os.environ['OWL_TEST_DATABASE_URL']); c.execute(open('pg_worker/schema.sql').read()); c.commit(); c.close()"
+      - name: Independent integration and subprocess crash tests
+        run: python -m pytest -v pg_worker/test_integration.py pg_worker/test_faults.py
