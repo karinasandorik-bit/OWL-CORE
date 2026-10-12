@@ -95,6 +95,14 @@ def test_timeout_after_commit_two_independent_ledgers_no_duplicate():
                 assert verdict==Verdict.CONFIRMED
                 assert not complete(c,job_id,"worker-A",1,{"unsafe":True})
                 assert complete(c,job_id,"worker-B",2,{"provider_receipt":receipt})
+            # Deliberately replay the original ambiguous POST with the SAME key.
+            # This tests the actual idempotency behavior, not merely absence of retry.
+            replay=Request(base+"/commit",data=b"{}",headers={"Idempotency-Key":key},method="POST")
+            with urlopen(replay,timeout=3) as response:
+                replay_receipt=json.load(response)
+            assert replay_receipt==receipt
+            # A second reconciliation must not cause a new operation.
+            assert reconcile(key,lookup,lambda r:r==receipt)[0]==Verdict.CONFIRMED
             # Oracle 2: PostgreSQL independently persisted the reconciled receipt.
             with connect() as c:
                 worker_after=c.execute("SELECT status,result FROM owl_worker.jobs WHERE id=%s",(job_id,)).fetchone()
