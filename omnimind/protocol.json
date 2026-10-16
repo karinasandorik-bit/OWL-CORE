@@ -1,0 +1,34 @@
+{
+  "schema_version": "0.1",
+  "roles": [
+    "coordinator",
+    "researcher",
+    "critic",
+    "verifier"
+  ],
+  "states": [
+    "proposed",
+    "running",
+    "completed",
+    "failed",
+    "unverified"
+  ],
+  "required_evidence": [
+    "provider",
+    "model",
+    "request_id",
+    "timestamp",
+    "response_digest"
+  ],
+  "permissions": {
+    "external_read": "allowed_by_tool",
+    "external_write": "scoped_user_authorization",
+    "spending": "explicit_budget"
+  },
+  "evaluation": {
+    "baseline": "required",
+    "held_out": "required",
+    "independent": "required"
+  },
+  "status": "proposal_not_production"
+}
